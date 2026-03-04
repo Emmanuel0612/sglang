@@ -178,6 +178,17 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase, MultiPlatformOp):
     ):
         self.with_bias = with_bias
 
+        padded_for_mfma = False
+        if _use_aiter:
+            ALIGN_K = 128
+            align_k = lambda n: (n + ALIGN_K - 1) // ALIGN_K * ALIGN_K
+            w13_inter_dim_padded = 2 * intermediate_size_per_partition
+            w2_inter_dim_padded = intermediate_size_per_partition // 2
+            if w2_inter_dim_padded % ALIGN_K:
+                w2_inter_dim_padded = align_k(w2_inter_dim_padded)
+                w13_inter_dim_padded = w2_inter_dim_padded * 2
+                padded_for_mfma = True
+        
         # Fused gate_up_proj (column parallel)
         w13_up_dim = (
             2 * intermediate_size_per_partition
@@ -188,7 +199,9 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase, MultiPlatformOp):
         if self.use_triton_kernels:
             w13_weight_n, w13_weight_k = w13_weight_k, w13_weight_n
         w13_weight = torch.nn.Parameter(
-            torch.empty(num_experts, w13_weight_n, w13_weight_k, dtype=params_dtype),
+            torch.empty(num_experts, 
+                        (w13_weight_n if not padded_for_mfma else w13_inter_dim_padded), 
+                        w13_weight_k, dtype=params_dtype),
             requires_grad=False,
         )
         layer.register_parameter("w13_weight", w13_weight)
@@ -210,7 +223,10 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase, MultiPlatformOp):
         if self.use_triton_kernels:
             w2_weight_n, w2_weight_k = w2_weight_k, w2_weight_n
         w2_weight = torch.nn.Parameter(
-            torch.empty(num_experts, w2_weight_n, w2_weight_k, dtype=params_dtype),
+            torch.empty(num_experts, 
+                        w2_weight_n, 
+                        (w2_weight_k if not padded_for_mfma else w2_inter_dim_padded), 
+                        dtype=params_dtype),
             requires_grad=False,
         )
         layer.register_parameter("w2_weight", w2_weight)
