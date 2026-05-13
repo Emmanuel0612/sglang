@@ -22,6 +22,8 @@ from typing import Tuple
 
 import torch
 import triton
+if not hasattr(triton, '__version__'):
+    triton.__version__ = "custom-amd-build"
 import triton.testing
 from sgl_kernel import transfer_kv_all_layer, transfer_kv_per_layer
 
@@ -31,9 +33,10 @@ from sglang.jit_kernel.hicache import (
     transfer_hicache_all_layer,
     transfer_hicache_one_layer,
 )
-from sglang.test.ci.ci_register import register_cuda_ci
+from sglang.test.ci.ci_register import register_amd_ci, register_cuda_ci
 
 register_cuda_ci(est_time=29, suite="stage-b-kernel-benchmark-1-gpu-large")
+register_amd_ci(est_time=56, suite="stage-b-test-1-gpu-large-amd")
 
 DISABLE_TORCH = os.environ.get("DISABLE_TORCH", "0") == "1"
 PAGE_SIZE = 1
