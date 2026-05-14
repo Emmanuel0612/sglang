@@ -14,7 +14,7 @@ from sglang.srt.utils import get_compiler_backend
 from sglang.test.ci.ci_register import register_cuda_ci, register_amd_ci
 
 register_cuda_ci(est_time=10, suite="stage-b-kernel-benchmark-1-gpu-large")
-register_amd_ci(est_time=10, suite="stage-b-test-1-gpu-large-amd")
+register_amd_ci(est_time=10, suite="jit-kernel-unit-test-amd")
 
 SIZE_LIST = get_benchmark_range(
     full_range=[2**n for n in range(4, 16)],  # 16 … 32K elements
