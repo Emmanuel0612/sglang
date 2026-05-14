@@ -484,12 +484,12 @@ struct HiCacheKernel {
 
     TensorMatcher({N})  //
         .with_dtype<uint64_t>()
-        .with_device<kDLCUDA>(device_)
+        .with_device<kDLCUDA, kDLROCM>(device_)
         .verify(ptr_src)
         .verify(ptr_dst);
     TensorMatcher({L})  //
         .with_dtype<int32_t, int64_t>(dtype_)
-        .with_device<kDLCUDA>(device_)
+        .with_device<kDLCUDA, kDLROCM>(device_)
         .verify(indices_src)
         .verify(indices_dst);
 
